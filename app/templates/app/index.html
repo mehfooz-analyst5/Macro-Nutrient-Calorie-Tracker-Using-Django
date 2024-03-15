@@ -8,13 +8,17 @@
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+  
+
+
     <title>Food Website</title>
   </head>
   <body>
 
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <div class="container">
-          <a class="navbar-brand" href="#">Navbar</a>
+          <a class="navbar-brand" href="/">Macro Nutrients</a>
           <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
           </button>
@@ -32,20 +36,119 @@
 
             </ul>
             <form class="d-flex">
-              <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-              <button class="btn btn-outline-success" type="submit">Search</button>
+              <div class="py-2">
+                Hi, {{ request.user.email }}
+              </div>
             </form>
           </div>
         </div>
     </nav>
 
     <div class="container my-5">
-        <div class="row">
+
+        <h4 class="text-center">Calorie Goal</h4>
+
+        <div class='row mt-4'>
+            <div class='col-md-9 offset-1'>
+
+              <div class="progress">
+                <div class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+              </div>
+            
+            </div>
+        </div>
+
+
+        <div class="row my-5">
            
-            <h1 class="text-center">Welcome to Food Website</h1>
-            <hr>
+            <form action='' method='POST'>
+                {% csrf_token %}
+
+                <div class='input-group mt-4'>
+              
+                  <select class="form-select" name="food_consumed" id="food_consumed">
+                      {% for food in foods %}
+                          <option value="{{ food.name }}">{{ food.name }}</option>
+                      {% endfor %}
+                  </select>
+
+                  <button class="btn btn-primary " type="submit">Add</button>
+                </div>
+
+            </form>
+
+           
     
         </div>
+
+        <div class='row my-5'>
+
+          <div class='col-md-6'>
+
+            <div>
+              <h4>Today's Consumption</h4>
+            </div>
+
+            <hr>
+
+            <table id='table' class="table table-striped ">
+
+                  <tr class='bg-primary text-white'>
+                      <th>Food Item</th>
+                      <th>Calories (Kcal)</th>
+                      <th>Fat (gm)</th>
+                      <th>Carbs (gm)</th>
+                      <th>Protein (gm)</th>
+                  </tr>
+
+                  {% for food in consumed_food %}
+                      <tr>
+                          <td>{{ food.food_consumed }}</td>
+                          <td>{{ food.food_consumed.calories }}</td>
+                          <td>{{ food.food_consumed.fats }}</td>
+                          <td>{{ food.food_consumed.carbs }}</td>
+                          <td>{{ food.food_consumed.protein }}</td>
+                      </tr>
+                  {% endfor %}
+
+                  <tr>
+                    <td id='name'><b>Total</b></td>
+                    <td id='totalCalories'></td>
+                    <td id='totalFats'></td>
+                    <td id='totalCarbs'></td>
+                    <td id='taotalProtein'></td>                    
+                  </tr>
+
+            </table>
+
+
+          </div>
+
+          <div class='col-md-5 offset-1'>
+
+            <div class=''>
+              <h4>Today's Breakdown</h4>
+            </div>
+
+            <hr>
+
+            <div class='card-header text-white bg-primary'>
+              <h5>Macro Nutrients Breakdown</h5>
+            </div>
+
+            <div class='col-md-12 mt-3'>
+                <canvas id="myChart" width="400" height="400"></canvas>
+            </div>
+
+            
+
+           
+
+
+          </div>
+
+        </div>
+
     </div>
 
 
@@ -53,6 +156,77 @@
     <!-- Option 1: Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
 
+    
+
+    <script>
+
+      var table = document.getElementById('table');
+      var calories = 0, protein = 0, carbs = 0, fats = 0;
+
+      for (var i = 1; i < table.rows.length-1; i++) {
+          calories += parseInt(table.rows[i].cells[1].innerHTML);
+          calories = Math.round(calories);
+
+          fats += parseInt(table.rows[i].cells[2].innerHTML);
+          fats = Math.round(fats);
+
+          carbs += parseInt(table.rows[i].cells[3].innerHTML);
+          carbs = Math.round(carbs);
+
+          protein += parseInt(table.rows[i].cells[4].innerHTML);
+          protein = Math.round(protein);
+          
+      }
+      console.log(calories, protein, carbs, fats);
+
+      document.getElementById('totalCalories').innerHTML = '<b>' + calories + '(Kcal)</b>';
+      document.getElementById('totalFats').innerHTML = '<b>' + fats + '(gm)</b>';
+      document.getElementById('totalCarbs').innerHTML = '<b>' + carbs + '(gm)</b>';
+      document.getElementById('taotalProtein').innerHTML = '<b>' + protein + '(gm)</b>';
+
+
+      var calPer = (calories/2000)*100;
+      calPer = Math.round(calPer);
+      console.log(calPer);
+      document.getElementsByClassName('progress-bar')[0].setAttribute('style','width: '+calPer+'%');
+      document.getElementsByClassName('progress-bar')[0].innerHTML = calPer + '%';
+
+
+      var total = protein + carbs + fats;
+      var proteinP = Math.round((protein/total)*100);
+      var carbsP = Math.round((carbs/total)*100);
+      var fatsP = Math.round((fats/total)*100);
+
+
+      const ctx = document.getElementById('myChart');
+      var myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Carbs ' + carbs+'%', 'Protein ' + proteinP+'%', 'Fats ' + fatsP+'%'],
+
+            datasets: [{
+                label: 'Macro Nutrients',
+                data: [proteinP, carbsP, fatsP],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.9)',
+                    'rgba(54, 162, 235, 0.9)',
+                    'rgba(255, 206, 86, 0.9)',
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                ],
+                borderWidth: 1
+            }]
+        },
+        
+    });
+
+  
+    </script>
+
+  
 
   </body>
 </html>
